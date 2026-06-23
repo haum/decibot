@@ -1,4 +1,5 @@
 export const INFOS_MICROPHONE = 0x01;
+export const INFOS_MOTORS = 0x02;
 
 let infos_ws = null;
 let period_ms = 500;
@@ -28,6 +29,16 @@ function on_msg(e) {
 			]
 		}));
 		pos += 4*4;
+	}
+
+	if (mask & INFOS_MOTORS) {
+		document.body.dispatchEvent(new CustomEvent('h:infos:motors', {
+			'detail': [
+				view.getFloat32(pos + 0),
+				view.getFloat32(pos + 4),
+			]
+		}));
+		pos += 2*4;
 	}
 }
 

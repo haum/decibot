@@ -5,6 +5,7 @@ import struct
 import aiowebserver as web
 
 import decibot.microphones as mic
+import decibot.motors as motors
 import decibot.wlan as wlan
 
 @web.route('GET', '/')
@@ -60,6 +61,17 @@ async def wlan_disconnect_handler(rq):
     await rq.w('OK');
 
 
+@web.route_ws('/motors.ws')
+async def motor_ws(rq, evt):
+    t = evt['type']
+    if t == 'bytes':
+        vl, vr = struct.unpack('ff', evt['data'])
+        motors.ml(vl)
+        motors.mr(vr)
+    elif t == 'close':
+        motors.stop()
+
+
 infos_ws_data = {}
 async def infos_ws_task(rq):
     info = infos_ws_data[rq]
@@ -71,6 +83,7 @@ async def infos_ws_task(rq):
             mic.power_slow_l, mic.power_slow_r,
             mic.power_fast_l, mic.power_fast_r
         )
+        if mask & 2: b += struct.pack('>ff', motors.ml_p, motors.mr_p)
         await rq.w(b);
         await asyncio.sleep(info['delay'])
 
