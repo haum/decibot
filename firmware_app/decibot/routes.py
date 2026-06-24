@@ -1,7 +1,10 @@
+import asyncio
 import json
+import struct
  
 import aiowebserver as web
 
+import decibot.microphones as mic
 import decibot.wlan as wlan
 
 @web.route('GET', '/')
@@ -55,4 +58,37 @@ async def wlan_disconnect_handler(rq):
     wlan.disconnect()
     await rq.header_text()
     await rq.w('OK');
+
+
+infos_ws_data = {}
+async def infos_ws_task(rq):
+    info = infos_ws_data[rq]
+    while True:
+        mask = info['mask']
+        b = int(mask).to_bytes()
+        if mask & 1: b += struct.pack(
+            '>ffff',
+            mic.power_slow_l, mic.power_slow_r,
+            mic.power_fast_l, mic.power_fast_r
+        )
+        await rq.w(b);
+        await asyncio.sleep(info['delay'])
+
+@web.route_ws('/infos.ws')
+async def infos_ws(rq, evt):
+    global infos_ws_data
+    t = evt['type']
+    if t == 'open':
+        infos_ws_data[rq] = {
+            'task': asyncio.create_task(infos_ws_task(rq)),
+            'mask': 1,
+            'delay': 0.5
+        }
+    elif t == 'bytes':
+        infos_ws_data[rq]['mask'] = evt['data'][-1]
+        if len(evt['data']) > 1:
+            infos_ws_data[rq]['delay'] = max(evt['data'][-2], 1) * 0.01
+    elif t == 'close':
+        infos_ws_data[rq]['task'].cancel()
+        del infos_ws_data[rq]
 
