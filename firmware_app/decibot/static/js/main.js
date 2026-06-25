@@ -16,6 +16,7 @@ if (sessionStorage.getItem('sections_opened')) {
 
 const sections = [
 	{ 'id': 'motors', 'title': 'Moteurs' },
+	{ 'id': 'iosensors', 'title': 'Capteurs' },
 	{ 'id': 'wlan', 'title': 'Wifi' },
 ];
 const ul_header_menu = document.getElementById('ul_header_menu');
