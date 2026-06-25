@@ -15,6 +15,7 @@ if (sessionStorage.getItem('sections_opened')) {
 }
 
 const sections = [
+	{ 'id': 'microphones', 'title': 'Microphones' },
 	{ 'id': 'motors', 'title': 'Moteurs' },
 	{ 'id': 'iosensors', 'title': 'Capteurs' },
 	{ 'id': 'config', 'title': 'Config' },
