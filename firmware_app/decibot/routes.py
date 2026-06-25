@@ -6,6 +6,7 @@ import aiowebserver as web
 
 import decibot.microphones as mic
 import decibot.motors as motors
+import decibot.sensors as sensors
 import decibot.wlan as wlan
 
 @web.route('GET', '/')
@@ -84,6 +85,11 @@ async def infos_ws_task(rq):
             mic.power_fast_l, mic.power_fast_r
         )
         if mask & 2: b += struct.pack('>ff', motors.ml_p, motors.mr_p)
+        if mask & 4: b+= struct.pack(
+            'BBBB',
+            sensors.in_stop1.value(), sensors.in_stop2.value(),
+            sensors.in_wheel_l.value(), sensors.in_wheel_r.value()
+        )
         await rq.w(b);
         await asyncio.sleep(info['delay'])
 

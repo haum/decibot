@@ -1,5 +1,6 @@
 export const INFOS_MICROPHONE = 0x01;
 export const INFOS_MOTORS = 0x02;
+export const INFOS_IOSENSORS = 0x04;
 
 let infos_ws = null;
 let period_ms = 500;
@@ -39,6 +40,18 @@ function on_msg(e) {
 			]
 		}));
 		pos += 2*4;
+	}
+
+	if (mask & INFOS_IOSENSORS) {
+		document.body.dispatchEvent(new CustomEvent('h:infos:iosensors', {
+			'detail': [
+				!!view.getUint8(pos + 0),
+				!!view.getUint8(pos + 1),
+				!!view.getUint8(pos + 2),
+				!!view.getUint8(pos + 3),
+			]
+		}));
+		pos += 4;
 	}
 }
 
