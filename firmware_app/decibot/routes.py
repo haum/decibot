@@ -4,6 +4,7 @@ import struct
  
 import aiowebserver as web
 
+import decibot.config as conf
 import decibot.microphones as mic
 import decibot.motors as motors
 import decibot.sensors as sensors
@@ -17,6 +18,23 @@ async def root_handler(rq):
 @web.route('GET', '/static/', True)
 async def root_handler(rq):
     await rq.sendfile(rq.path[8:], 'decibot/static/')
+
+
+@web.route('GET', '/config/all.json')
+async def config_all_handler(rq):
+    await rq.header_json()
+    await rq.w(json.dumps(conf.config))
+
+@web.route('POST', '/config/set')
+async def config_set_handler(rq):
+    d = await rq.decode_postform_data()
+    for k, v in d.items():
+        try:
+            conf.set(k, v)
+        except:
+            pass
+    conf.save()
+    await config_all_handler(rq)
 
 
 @web.route('GET', '/wlan/known.json')
