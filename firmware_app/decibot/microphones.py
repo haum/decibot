@@ -5,9 +5,11 @@ import array
 import math
 import time
 
-sck_pin = machine.Pin(0)  # Serial clock
-sd_pin  = machine.Pin(1)  # Serial data
-ws_pin  = machine.Pin(2)  # Word select
+import decibot.config as conf
+
+sck_pin = machine.Pin(conf.get('pin_i2s_sck'))  # Serial clock
+sd_pin  = machine.Pin(conf.get('pin_i2s_sd'))   # Serial data
+ws_pin  = machine.Pin(conf.get('pin_i2s_ws'))   # Word select
 
 dt = 0.050
 

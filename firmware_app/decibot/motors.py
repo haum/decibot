@@ -1,15 +1,12 @@
 import machine
 
-# Using https://handsontec.com/index.php/product/43a-high-power-bts7960-dc-motor-driver-module/ module
-ml_lpwm_pin = machine.Pin(5)  # LPWM of BTS7960 (left motor)
-ml_rpwm_pin = machine.Pin(6)  # RPWM of BTS7960 (left motor)
-mr_lpwm_pin = machine.Pin(7)  # LPWM of BTS7960 (right motor)
-mr_rpwm_pin = machine.Pin(8)  # RPWM of BTS7960 (right motor)
+import decibot.config as conf
 
-ml_lpwm = machine.PWM(ml_lpwm_pin, freq=24000, duty_u16=0)
-ml_rpwm = machine.PWM(ml_rpwm_pin, freq=24000, duty_u16=0)
-mr_lpwm = machine.PWM(mr_lpwm_pin, freq=24000, duty_u16=0)
-mr_rpwm = machine.PWM(mr_rpwm_pin, freq=24000, duty_u16=0)
+# Using https://handsontec.com/index.php/product/43a-high-power-bts7960-dc-motor-driver-module/ module
+ml_lpwm = machine.PWM(machine.Pin(conf.get('pin_ml_lpwm')), freq=24000, duty_u16=0)  # LPWM of BTS7960 (left motor)
+ml_rpwm = machine.PWM(machine.Pin(conf.get('pin_ml_rpwm')), freq=24000, duty_u16=0)  # RPWM of BTS7960 (left motor)
+mr_lpwm = machine.PWM(machine.Pin(conf.get('pin_mr_lpwm')), freq=24000, duty_u16=0)  # LPWM of BTS7960 (right motor)
+mr_rpwm = machine.PWM(machine.Pin(conf.get('pin_mr_rpwm')), freq=24000, duty_u16=0)  # RPWM of BTS7960 (right motor)
 
 ml_p = 0
 mr_p = 0
