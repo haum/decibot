@@ -17,6 +17,13 @@ const c_pins = [
   ['pin_wheel_r', 'Détection levage droit'],
 ]
 
+const c_mic_filters = [
+  ['mic_filter_5tau_slow', '5×τ microphone slow'],
+  ['mic_filter_5tau_fast', '5×τ microphone fast'],
+  ['mic_filter_5tau_ratio', '5×τ signal moteur'],
+  ['mic_filter_ratio', 'Ratio déclenchement moteur'],
+]
+
 function update_form(conf) {
 	for (const input of form.elements) {
 		if (input.name)
@@ -51,6 +58,11 @@ function setup_form() {
 	h_pins.innerText = 'Brochage'
 	form.append(h_pins);
 	for (const l of c_pins) add_input(l, true);
+
+	const h_mic_filters = document.createElement('h3');
+	h_mic_filters.innerText = 'Filtres microphone'
+	form.append(h_mic_filters);
+	for (const l of c_mic_filters) add_input(l);
 
 	const btn = document.createElement('input');
 	btn.type = 'submit';
