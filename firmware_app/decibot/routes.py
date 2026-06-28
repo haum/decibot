@@ -98,9 +98,10 @@ async def infos_ws_task(rq):
         mask = info['mask']
         b = int(mask).to_bytes()
         if mask & 1: b += struct.pack(
-            '>ffff',
+            '>ffffBB',
             mic.power_slow_l, mic.power_slow_r,
-            mic.power_fast_l, mic.power_fast_r
+            mic.power_fast_l, mic.power_fast_r,
+            int(mic.ml_p*255), int(mic.mr_p*255),
         )
         if mask & 2: b += struct.pack('>ff', motors.ml_p, motors.mr_p)
         if mask & 4: b+= struct.pack(

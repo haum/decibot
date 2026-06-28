@@ -27,9 +27,11 @@ function on_msg(e) {
 				view.getFloat32(pos + 4),
 				view.getFloat32(pos + 8),
 				view.getFloat32(pos + 12),
+				view.getUint8(pos + 16),
+				view.getUint8(pos + 17),
 			]
 		}));
-		pos += 4*4;
+		pos += 4*4 + 2;
 	}
 
 	if (mask & INFOS_MOTORS) {
