@@ -70,6 +70,27 @@ document.body.addEventListener('h:infos:microphone', e => {
 	}
 	ctx.stroke();
 
+	ctx.fillStyle = "#00aa00";
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	for (let i = mic_history.length-1; i >= 0; i--) {
+		const v = mic_history[i][4] / 255 * -1 * 20;
+		ctx.lineTo(v, (mic_history.length - i - 1)*h/maxhist);
+	}
+	ctx.lineTo(0, (mic_history.length-1)*h/maxhist);
+	ctx.closePath();
+	ctx.fill();
+
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	for (let i = mic_history.length-1; i >= 0; i--) {
+		const v = mic_history[i][5] / 255 * 20;
+		ctx.lineTo(v, (mic_history.length - i - 1)*h/maxhist);
+	}
+	ctx.lineTo(0, (mic_history.length-1)*h/maxhist);
+	ctx.closePath();
+	ctx.fill();
+
 	ctx.lineWidth = 2;
 	ctx.strokeStyle = "#e0e3e7";
 	ctx.beginPath();
