@@ -52,9 +52,6 @@ def process_buffer(buf, n, a_f, a_s):
 
 
 async def start():
-    alpha_fast = 1-math.exp(-5*dt/0.5)
-    alpha_slow = 1-math.exp(-5*dt/4)
-
     sreader = asyncio.StreamReader(audio_in)
     buf = array.array("i", [0] * 4096)
 
@@ -63,6 +60,8 @@ async def start():
 
         n = await sreader.readinto(buf)
         if n > 0:
+            alpha_fast = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_fast'))
+            alpha_slow = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_slow'))
             process_buffer(buf, n, alpha_fast, alpha_slow)
 
         await asyncio.sleep_ms(max(0, 50 - (time.ticks_ms() - start)))
