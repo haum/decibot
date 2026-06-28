@@ -29,11 +29,14 @@ power_fast_l = 0
 power_fast_r = 0
 power_slow_l = 0
 power_slow_r = 0
+ml_p = 0
+mr_p = 0
 
 @micropython.native
-def process_buffer(buf, n, a_f, a_s):
+def process_buffer(buf, n, a_f, a_s, a_r, r):
     global power_fast_l, power_fast_r
     global power_slow_l, power_slow_r
+    global ml_p, mr_p
 
     acc_l = 0
     acc_r = 0
@@ -49,6 +52,8 @@ def process_buffer(buf, n, a_f, a_s):
     power_fast_r += a_f * (p_r - power_fast_r)
     power_slow_l += a_s * (p_l - power_slow_l)
     power_slow_r += a_s * (p_r - power_slow_r)
+    ml_p += a_r * ((1 if power_fast_l > power_slow_l * r else 0) - ml_p)
+    mr_p += a_r * ((1 if power_fast_r > power_slow_r * r else 0) - mr_p)
 
 
 async def start():
@@ -62,6 +67,8 @@ async def start():
         if n > 0:
             alpha_fast = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_fast'))
             alpha_slow = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_slow'))
-            process_buffer(buf, n, alpha_fast, alpha_slow)
+            alpha_ratio = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_ratio'))
+            ratio = conf.get('mic_filter_ratio')
+            process_buffer(buf, n, alpha_fast, alpha_slow, alpha_ratio, ratio)
 
         await asyncio.sleep_ms(max(0, 50 - (time.ticks_ms() - start)))

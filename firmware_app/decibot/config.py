@@ -23,6 +23,8 @@ def init_configs():
 
     c('mic_filter_5tau_fast', 0.5, float)
     c('mic_filter_5tau_slow', 4.0, float)
+    c('mic_filter_5tau_ratio', 1.5, float)
+    c('mic_filter_ratio', 1.25, float)
 
 notify_changes_cbs = {}
 
