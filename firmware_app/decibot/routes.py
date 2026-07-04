@@ -97,6 +97,7 @@ async def motor_ws(rq, evt):
     t = evt['type']
     if t == 'bytes':
         vl, vr = struct.unpack('ff', evt['data'])
+        glue.mic_ctrl = False
         motors.ml(vl)
         motors.mr(vr)
     elif t == 'close':
