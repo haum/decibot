@@ -5,6 +5,7 @@ import struct
 import aiowebserver as web
 
 import decibot.config as conf
+import decibot.glue as glue
 import decibot.microphones as mic
 import decibot.motors as motors
 import decibot.sensors as sensors
@@ -79,6 +80,17 @@ async def wlan_disconnect_handler(rq):
     await rq.header_text()
     await rq.w('OK');
 
+@web.route('GET', '/mic_ctrl/on')
+async def mic_ctrl_on_handler(rq):
+    glue.mic_ctrl = True
+    await rq.header_text()
+    await rq.w('OK');
+
+@web.route('GET', '/mic_ctrl/off')
+async def mic_ctrl_on_handler(rq):
+    glue.mic_ctrl = True
+    await rq.header_text()
+    await rq.w('OK');
 
 @web.route_ws('/motors.ws')
 async def motor_ws(rq, evt):
