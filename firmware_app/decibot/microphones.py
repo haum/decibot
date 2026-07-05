@@ -4,6 +4,7 @@ import machine
 import array
 import math
 import time
+import socket
 
 import decibot.config as conf
 
@@ -12,6 +13,9 @@ sd_pin  = machine.Pin(conf.get('pin_i2s_sd'))   # Serial data
 ws_pin  = machine.Pin(conf.get('pin_i2s_ws'))   # Word select
 
 dt = 0.050
+
+debug_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+debug_addr = None
 
 audio_in = machine.I2S(
     0,
@@ -70,5 +74,8 @@ async def start():
             alpha_ratio = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_ratio'))
             ratio = conf.get('mic_filter_ratio')
             process_buffer(buf, n, alpha_fast, alpha_slow, alpha_ratio, ratio)
+
+            if debug_addr:
+                debug_udp.sendto(buf[:n], debug_addr)
 
         await asyncio.sleep_ms(max(0, 50 - (time.ticks_ms() - start)))

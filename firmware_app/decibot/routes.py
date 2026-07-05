@@ -92,6 +92,17 @@ async def mic_ctrl_on_handler(rq):
     await rq.header_text()
     await rq.w('OK');
 
+@web.route('GET', '/debug_mic_addr/', True)
+async def debug_mic_ip_handler(rq):
+    await rq.header_text()
+    v = rq.path[16:].split(':')
+    if v[0]:
+        if len(v) == 1:
+            v.append(9000)
+        v[1] = int(v[1])
+        mic.debug_addr = v[:2] if v[0] != 'None' else None
+    await rq.w(str(mic.debug_addr))
+
 @web.route_ws('/motors.ws')
 async def motor_ws(rq, evt):
     t = evt['type']
