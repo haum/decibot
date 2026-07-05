@@ -18,6 +18,7 @@ const sections = [
 	{ 'id': 'microphones', 'title': 'Microphones' },
 	{ 'id': 'motors', 'title': 'Moteurs' },
 	{ 'id': 'iosensors', 'title': 'Capteurs' },
+	{ 'id': 'micctrl', 'title': 'MicCtrl' },
 	{ 'id': 'config', 'title': 'Config' },
 	{ 'id': 'wlan', 'title': 'Wifi' },
 ];
