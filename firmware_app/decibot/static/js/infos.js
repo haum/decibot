@@ -1,6 +1,7 @@
 export const INFOS_MICROPHONE = 0x01;
 export const INFOS_MOTORS = 0x02;
 export const INFOS_IOSENSORS = 0x04;
+export const INFOS_MICCTRL = 0x08;
 
 let infos_ws = null;
 let period_ms = 500;
@@ -54,6 +55,15 @@ function on_msg(e) {
 			]
 		}));
 		pos += 4;
+	}
+
+	if (mask & INFOS_MICCTRL) {
+		document.body.dispatchEvent(new CustomEvent('h:infos:micctrl', {
+			'detail': [
+				!!view.getUint8(pos + 0),
+			]
+		}));
+		pos += 1;
 	}
 }
 

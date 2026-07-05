@@ -122,6 +122,7 @@ async def infos_ws_task(rq):
             sensors.in_stop1.value(), sensors.in_stop2.value(),
             sensors.in_wheel_l.value(), sensors.in_wheel_r.value()
         )
+        if mask & 8: b+= struct.pack( 'B', glue.mic_ctrl)
         await rq.w(b);
         await asyncio.sleep(info['delay'])
 
