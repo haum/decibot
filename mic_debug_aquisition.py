@@ -5,6 +5,7 @@ import socket
 import wave
 import requests
 import struct
+import time
 
 def debug_mic_stream(ip, local_ip, local_port=9000):
     if ip: requests.get(f"http://{ip}/debug_mic_addr/{local_ip}:{local_port}", timeout=3)
@@ -30,6 +31,7 @@ def debug_mic_stream(ip, local_ip, local_port=9000):
         if ip: requests.get(f"http://{ip}/debug_mic_addr/None", timeout=3)
 
 def main():
+    time0 = time.time()
     parser = argparse.ArgumentParser(description="Get Decibot microphone data for debug")
     parser.add_argument("--ip", help="Remote IP")
     parser.add_argument("--local-ip", required=True, help="Local IP")
@@ -44,6 +46,7 @@ def main():
 
     for left, right in debug_mic_stream(args.ip, args.local_ip, args.local_port):
         b = b"".join(struct.pack("<i", l) + struct.pack("<i", r) for l, r in zip(left, right))
+        print(f'{time.time()-time0:.3f}\tSample received!\tlen={[len(left), len(right)]}')
         wav.writeframes(b)
 
     wav.close()
