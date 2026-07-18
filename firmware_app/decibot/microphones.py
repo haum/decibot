@@ -17,16 +17,18 @@ dt = 0.050
 debug_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 debug_addr = None
 
+bufsz = 4096
+samplerate = 22050
 audio_in = machine.I2S(
     0,
     sck=sck_pin,
     ws=ws_pin,
     sd=sd_pin,
     mode=machine.I2S.RX,
-    bits=32,
+    bits=16,
     format=machine.I2S.STEREO,
-    rate=32000,
-    ibuf=2048
+    rate=samplerate,
+    ibuf=bufsz
 )
 
 power_fast_l = 0

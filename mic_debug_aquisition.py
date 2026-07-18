@@ -18,7 +18,7 @@ def debug_mic_stream(ip, local_ip, local_port=9000):
         while True:
             try:
                 data, addr = sock.recvfrom(4096)
-                values = [v[0] for v in struct.iter_unpack("<i", data)]
+                values = [v[0] for v in struct.iter_unpack("<h", data)]
                 left = values[0::2]
                 right = values[1::2]
                 yield left, right
@@ -41,12 +41,12 @@ def main():
 
     wav = wave.open(args.file, "wb")
     wav.setnchannels(2)
-    wav.setsampwidth(4)
-    wav.setframerate(32000)
+    wav.setsampwidth(2)
+    wav.setframerate(22050)
 
     for left, right in debug_mic_stream(args.ip, args.local_ip, args.local_port):
-        b = b"".join(struct.pack("<i", l) + struct.pack("<i", r) for l, r in zip(left, right))
         print(f'{time.time()-time0:.3f}\tSample received!\tlen={[len(left), len(right)]}')
+        b = b"".join(struct.pack("<h", l) + struct.pack("<h", r) for l, r in zip(left, right))
         wav.writeframes(b)
 
     wav.close()
