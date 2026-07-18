@@ -12,9 +12,6 @@ sck_pin = machine.Pin(conf.get('pin_i2s_sck'))  # Serial clock
 sd_pin  = machine.Pin(conf.get('pin_i2s_sd'))   # Serial data
 ws_pin  = machine.Pin(conf.get('pin_i2s_ws'))   # Word select
 
-dt = 0.050
-
-debug_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 debug_addr = None
 
 bufsz = 4096
@@ -31,6 +28,9 @@ audio_in = machine.I2S(
     ibuf=bufsz
 )
 
+nt = 0
+acc_l = 0
+acc_r = 0
 power_fast_l = 0
 power_fast_r = 0
 power_slow_l = 0
@@ -39,45 +39,57 @@ ml_p = 0
 mr_p = 0
 
 @micropython.native
-def process_buffer(buf, n, a_f, a_s, a_r, r):
+def process_buffer(buf, n):
+    global nt
+    global acc_l, acc_r
     global power_fast_l, power_fast_r
     global power_slow_l, power_slow_r
     global ml_p, mr_p
-
-    acc_l = 0
-    acc_r = 0
 
     for i in range(n//2):
         acc_l += buf[2*i]**2
         acc_r += buf[2*i+1]**2
 
-    p_l = math.sqrt(2*acc_l/n)
-    p_r = math.sqrt(2*acc_r/n)
+    nt += n//2
+    if nt >= 2048:
+        dt = nt/samplerate
 
-    power_fast_l += a_f * (p_l - power_fast_l)
-    power_fast_r += a_f * (p_r - power_fast_r)
-    power_slow_l += a_s * (p_l - power_slow_l)
-    power_slow_r += a_s * (p_r - power_slow_r)
-    ml_p += a_r * ((1 if power_fast_l > power_slow_l * r else 0) - ml_p)
-    mr_p += a_r * ((1 if power_fast_r > power_slow_r * r else 0) - mr_p)
+        a_f = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_fast'))
+        a_s = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_slow'))
+        a_r = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_ratio'))
+        r = conf.get('mic_filter_ratio')
+
+        p_l = math.sqrt(2*acc_l/nt)
+        p_r = math.sqrt(2*acc_r/nt)
+
+        power_fast_l += a_f * (p_l - power_fast_l)
+        power_fast_r += a_f * (p_r - power_fast_r)
+        power_slow_l += a_s * (p_l - power_slow_l)
+        power_slow_r += a_s * (p_r - power_slow_r)
+
+        ml_p += a_r * ((1 if power_fast_l > power_slow_l * r else 0) - ml_p)
+        mr_p += a_r * ((1 if power_fast_r > power_slow_r * r else 0) - mr_p)
+
+        nt = 0
 
 
 async def start():
+    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    udp_socket.setblocking(False)
+ 
+    buf = bytearray(bufsz)
     sreader = asyncio.StreamReader(audio_in)
-    buf = array.array("i", [0] * 4096)
+ 
+    try:
+        while True:
+            n = await sreader.readinto(buf)
+            if n > 0:
+                process_buffer(buf, n)
+                if debug_addr:
+                    udp_socket.sendto(buf[:n], debug_addr)
+            await asyncio.sleep_ms(0) 
 
-    while True:
-        start = time.ticks_ms()
-
-        n = await sreader.readinto(buf)
-        if n > 0:
-            alpha_fast = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_fast'))
-            alpha_slow = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_slow'))
-            alpha_ratio = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_ratio'))
-            ratio = conf.get('mic_filter_ratio')
-            process_buffer(buf, n, alpha_fast, alpha_slow, alpha_ratio, ratio)
-
-            if debug_addr:
-                debug_udp.sendto(buf[:n], debug_addr)
-
-        await asyncio.sleep_ms(max(0, 50 - (time.ticks_ms() - start)))
+    except Exception as e:
+        print(f"Erreur audio: {e}")
+    finally:
+        udp_socket.close()
