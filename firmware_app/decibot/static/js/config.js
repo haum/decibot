@@ -15,6 +15,7 @@ const c_pins = [
   ['pin_mr_rpwm', 'Moteur Droit - RPWM'],
   ['pin_wheel_l', 'Détection levage gauche'],
   ['pin_wheel_r', 'Détection levage droit'],
+  ['pin_led', 'Wifi LED'],
 ]
 
 const c_mic_filters = [

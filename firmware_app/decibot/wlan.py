@@ -4,7 +4,9 @@ import asyncio
 import time
 from machine import Pin
 
-LED_builtin = Pin(8, Pin.OUT)
+import decibot.config as conf
+
+LED_builtin = Pin(conf.get('pin_led'), Pin.OUT)
 
 wlan = network.WLAN(network.STA_IF)
 mac = wlan.config('mac')

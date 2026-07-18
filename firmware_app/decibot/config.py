@@ -20,6 +20,7 @@ def init_configs():
     c('pin_mr_rpwm', 8, int)
     c('pin_wheel_l', 9, int)
     c('pin_wheel_r', 10, int)
+    c('pin_led', 20, int)
 
     c('mic_filter_5tau_fast', 0.5, float)
     c('mic_filter_5tau_slow', 4.0, float)
