@@ -23,11 +23,13 @@ def start():
     import decibot.routes # To register web routes
     import decibot.microphones
     import decibot.glue
+    import decibot.udpcmd
 
     asyncio.create_task(wlan.autoconnect())
     asyncio.create_task(web.start())
     asyncio.create_task(microphones.start())
     asyncio.create_task(glue.start())
+    asyncio.create_task(udpcmd.start())
 
     try:
         asyncio.get_event_loop().run_forever()
