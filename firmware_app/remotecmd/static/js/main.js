@@ -15,6 +15,7 @@ if (sessionStorage.getItem('sections_opened')) {
 }
 
 const sections = [
+	{ 'id': 'ios', 'title': 'IOs' },
 	{ 'id': 'config', 'title': 'Config' },
 	{ 'id': 'wlan', 'title': 'Wifi' },
 ];

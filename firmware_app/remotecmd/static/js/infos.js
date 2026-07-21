@@ -1,4 +1,4 @@
-export const INFOS_UNKNOWN = 0x01;
+export const INFOS_BUTTONS = 0x01;
 
 let infos_ws = null;
 let period_ms = 500;
@@ -17,6 +17,23 @@ function on_msg(e) {
 
 	const mask = view.getUint8(pos);
 	pos++;
+
+	if (mask & INFOS_BUTTONS) {
+		document.body.dispatchEvent(new CustomEvent('h:infos:buttons', {
+			'detail': [
+				view.getUint8(pos + 0),
+				view.getUint8(pos + 1),
+				view.getUint8(pos + 2),
+				view.getUint8(pos + 3),
+				view.getUint8(pos + 4),
+				view.getUint8(pos + 5),
+				view.getUint8(pos + 6),
+				view.getUint8(pos + 7),
+				view.getUint8(pos + 8),
+			]
+		}));
+		pos += 9;
+	}
 }
 
 function send_mask() {

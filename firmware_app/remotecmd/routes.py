@@ -5,6 +5,7 @@ import struct
 import aiowebserver as web
 
 import remotecmd.config as conf
+import remotecmd.ios as ios
 import remotecmd.wlan as wlan
 
 @web.route('GET', '/')
@@ -82,6 +83,12 @@ async def infos_ws_task(rq):
     while True:
         mask = info['mask']
         b = int(mask).to_bytes()
+        if mask & 1: b += struct.pack(
+            'BBBBBBBBB',
+            ios.btns['x+'], ios.btns['y+'], ios.btns['z+'],
+            ios.btns['x-'], ios.btns['y-'], ios.btns['z-'],
+            ios.btns['✗'], ios.btns['•'], ios.btns['✓'],
+        )
         await rq.w(b)
         await asyncio.sleep(info['delay'])
 
