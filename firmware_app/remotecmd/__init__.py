@@ -21,9 +21,11 @@ def start():
 
     import asyncio
     import remotecmd.routes # To register web routes
+    import remotecmd.ios
 
     asyncio.create_task(wlan.autoconnect())
     asyncio.create_task(web.start())
+    asyncio.create_task(ios.start())
 
     try:
         asyncio.get_event_loop().run_forever()
