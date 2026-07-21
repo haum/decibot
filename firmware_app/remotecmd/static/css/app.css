@@ -1,0 +1,65 @@
+body {
+	padding: 0;
+	min-width: 650px;
+	min-height: 100vh;
+	text-align: center;
+}
+
+section {
+	display : none;
+	padding: 20px;
+	background: var(--pico-background-color);
+}
+section.opened {
+	display : block;
+}
+
+h1, h2, h3 { text-align: left; }
+
+h2 {
+	display: flex;
+	justify-content: space-between;
+}
+h2 span {
+	display: inline-block;
+	width: 2em;
+	text-align: center;
+	opacity: 0.5;
+	cursor: pointer;
+}
+h2 span:hover {
+	opacity: 1;
+}
+
+.clr-field button, .pico .clr-field button {
+	height: 32px;
+	right: 20px;
+	z-index: 1;
+	color: unset;
+	border: 1px solid black;
+	border-radius: 0;
+}
+
+body>header {
+	display: flex;
+	padding: 20px;
+	margin-bottom: 20px;
+	background: var(--pico-card-background-color);
+	justify-content: space-between;
+	align-items: center;
+	text-align: left;
+	position: sticky;
+	top: 0;
+	z-index: 2;
+}
+body>header>* {
+	margin: 0 !important;
+}
+
+.iosensor {
+		background: var(--pico-secondary);
+    color: #fff;
+    padding: var(--pico-block-spacing-horizontal);
+    border-radius: var(--pico-border-radius);
+		&.on { background: var(--pico-primary)}
+}
