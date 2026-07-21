@@ -27,6 +27,11 @@ def init_configs():
     c('mic_filter_5tau_ratio', 1.5, float)
     c('mic_filter_ratio', 1.25, float)
 
+    c('listen_ip', '0.0.0.0', str)
+    c('listen_port', 1234, int)
+    c('bot_nr', 0, int)
+
+
 notify_changes_cbs = {}
 
 def load():

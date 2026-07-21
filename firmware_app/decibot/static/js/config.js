@@ -25,6 +25,12 @@ const c_mic_filters = [
   ['mic_filter_ratio', 'Ratio déclenchement moteur'],
 ]
 
+const c_udpcmd = [
+	['listen_ip', 'Adresse d\'écoute'],
+	['listen_port', 'port d\'écoute'],
+	['bot_nr', 'Numéro du robot'],
+]
+
 function update_form(conf) {
 	for (const input of form.elements) {
 		if (input.name)
@@ -64,6 +70,11 @@ function setup_form() {
 	h_mic_filters.innerText = 'Filtres microphone'
 	form.append(h_mic_filters);
 	for (const l of c_mic_filters) add_input(l);
+
+	const h_udpcmd = document.createElement('h3');
+	h_udpcmd.innerText = 'UDP command'
+	form.append(h_udpcmd);
+	for (const l of c_udpcmd) add_input(l);
 
 	const btn = document.createElement('input');
 	btn.type = 'submit';
