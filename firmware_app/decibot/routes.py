@@ -9,6 +9,7 @@ import decibot.glue as glue
 import decibot.microphones as mic
 import decibot.motors as motors
 import decibot.sensors as sensors
+import decibot.udpcmd as udpcmd
 import decibot.wlan as wlan
 
 @web.route('GET', '/')
@@ -103,6 +104,21 @@ async def debug_mic_ip_handler(rq):
         mic.debug_addr = v[:2] if v[0] != 'None' else None
     await rq.w(str(mic.debug_addr))
 
+@web.route('GET', '/udpcmd/on')
+async def udpcmd_on_handler(rq):
+    udpcmd.enabled = True
+    await rq.header_text()
+    await rq.w('OK');
+
+@web.route('GET', '/udpcmd/off')
+async def udpcmd_off_handler(rq):
+    udpcmd.enabled = False
+    motors.ml(0)
+    motors.mr(0)
+    await rq.header_text()
+    await rq.w('OK');
+
+
 @web.route_ws('/motors.ws')
 async def motor_ws(rq, evt):
     t = evt['type']
@@ -134,6 +150,7 @@ async def infos_ws_task(rq):
             sensors.in_wheel_l.value(), sensors.in_wheel_r.value()
         )
         if mask & 8: b+= struct.pack( 'B', glue.mic_ctrl)
+        if mask & 0x10: b+= struct.pack( 'B', udpcmd.enabled)
         await rq.w(b);
         await asyncio.sleep(info['delay'])
 
