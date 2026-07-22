@@ -30,9 +30,12 @@ function on_msg(e) {
 				view.getUint8(pos + 6),
 				view.getUint8(pos + 7),
 				view.getUint8(pos + 8),
+				view.getUint8(pos + 9),
+				view.getUint8(pos + 10),
+				view.getUint8(pos + 11),
 			]
 		}));
-		pos += 9;
+		pos += 12;
 	}
 }
 

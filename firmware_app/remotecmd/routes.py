@@ -101,10 +101,11 @@ async def infos_ws_task(rq):
         mask = info['mask']
         b = int(mask).to_bytes()
         if mask & 1: b += struct.pack(
-            'BBBBBBBBB',
+            'BBBBBBBBBBBB',
             ios.btns['x+'], ios.btns['y+'], ios.btns['z+'],
             ios.btns['x-'], ios.btns['y-'], ios.btns['z-'],
             ios.btns['✗'], ios.btns['•'], ios.btns['✓'],
+            ios.led_x.value(), ios.led_y.value(), ios.led_z.value(),
         )
         await rq.w(b)
         await asyncio.sleep(info['delay'])

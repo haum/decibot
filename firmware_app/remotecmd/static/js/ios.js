@@ -13,6 +13,11 @@ section.insertAdjacentHTML('beforeend', `
 			<span class="iosensor" id="ios_yc">•</span>
 			<span class="iosensor" id="ios_zc">✓</span>
 	</p>
+	<p class="grid">
+			<span class="iosensor" id="ios_led_x">Led X</span>
+			<span class="iosensor" id="ios_led_y">Led Y</span>
+			<span class="iosensor" id="ios_led_z">Led Z</span>
+	</p>
 `);
 
 const chk_ios_xp = document.getElementById('ios_xp');
@@ -24,6 +29,9 @@ const chk_ios_zm = document.getElementById('ios_zm');
 const chk_ios_xc = document.getElementById('ios_xc');
 const chk_ios_yc = document.getElementById('ios_yc');
 const chk_ios_zc = document.getElementById('ios_zc');
+const chk_ios_led_x = document.getElementById('ios_led_x');
+const chk_ios_led_y = document.getElementById('ios_led_y');
+const chk_ios_led_z = document.getElementById('ios_led_z');
 
 document.body.addEventListener('h:infos:buttons', e => {
 	chk_ios_xp.classList.toggle('on', e.detail[0])
@@ -35,6 +43,9 @@ document.body.addEventListener('h:infos:buttons', e => {
 	chk_ios_xc.classList.toggle('on', e.detail[6])
 	chk_ios_yc.classList.toggle('on', e.detail[7])
 	chk_ios_zc.classList.toggle('on', e.detail[8])
+	chk_ios_led_x.classList.toggle('on', e.detail[9])
+	chk_ios_led_y.classList.toggle('on', e.detail[10])
+	chk_ios_led_z.classList.toggle('on', e.detail[11])
 });
 
 document.body.addEventListener('h:section:statechanged', e => {
