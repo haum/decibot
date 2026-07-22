@@ -37,13 +37,13 @@ notify_changes_cbs = {}
 def load():
     global config
     try:
-        with open('haumbot_config.json', 'r') as f:
+        with open('decibot_config.json', 'r') as f:
             config.update(json.load(f))
     except:
         print('Loading config failed, use default')
 
 def save():
-    with open('haumbot_config.json', 'w') as f:
+    with open('decibot_config.json', 'w') as f:
         json.dump(config, f)
 
 def get(k, dv=None):
