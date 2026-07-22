@@ -12,6 +12,21 @@ export const infos_ms = ms => {
 };
 window.infos_ms = infos_ms;
 
+connected_el.onclick = _e => {
+	send_mask(mask);
+}
+connected_el.oncontextmenu = e => {
+	e.preventDefault();
+	const p_raw = prompt('Period (ms) ?', period_ms);
+	const p = +p_raw;
+	if (p_raw === null) return;
+	if (Number.isFinite(p) && p >= 50) {
+		infos_ms(p);
+	} else {
+		alert("Invalid value `" + p_raw + "` ⇒ `" + p + "`, must be >= 50 (ms)")
+	}
+}
+
 function on_open() {
 	connected_el.classList.add('on');
 	send_mask(mask);
@@ -19,6 +34,8 @@ function on_open() {
 
 function on_close() {
 	connected_el.classList.remove('on');
+	infos_ws?.close();
+	infos_ws = null;
 }
 
 function on_msg(e) {
@@ -68,6 +85,7 @@ function send_mask() {
 			infos_ws.binaryType = "arraybuffer";
 			infos_ws.addEventListener("open", on_open);
 			infos_ws.addEventListener("message", on_msg);
+			infos_ws.addEventListener("error", on_close);
 			infos_ws.addEventListener("close", on_close);
 		}
 	}

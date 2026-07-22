@@ -59,6 +59,7 @@ body>header>* {
 #infos_connected {
 	color: #C00;
 	font-weight: bold;
+	cursor: pointer;
 	&.on { color: #0C0; }
 }
 
