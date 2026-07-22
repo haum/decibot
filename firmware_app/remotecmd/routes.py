@@ -35,6 +35,23 @@ async def config_set_handler(rq):
     await config_all_handler(rq)
 
 
+@web.route('GET', '/leds/', True)
+async def led_on_handler(rq):
+    p = rq.path[6:].split('/')
+    if len(p) != 2 or p[1] not in ('on', 'off', 'toggle') or p[0] not in 'xyz':
+        raise web.Http404()
+    if p[1] == 'toggle':
+        if p[0] == 'x': ios.led_x.value(not ios.led_x.value())
+        elif p[0] == 'y': ios.led_y.value(not ios.led_y.value())
+        elif p[0] == 'z': ios.led_z.value(not ios.led_z.value())
+    else:
+        if p[0] == 'x': ios.led_x.value(p[1] == 'on')
+        elif p[0] == 'y': ios.led_y.value(p[1] == 'on')
+        elif p[0] == 'z': ios.led_z.value(p[1] == 'on')
+    await rq.header_text()
+    await rq.w('OK')
+
+
 @web.route('GET', '/wlan/known.json')
 async def wlan_known_handler(rq):
     await rq.header_json()
