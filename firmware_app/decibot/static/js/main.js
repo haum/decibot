@@ -4,7 +4,7 @@ document.body.innerHTML = `
 			<summary>Sections…</summary>
 			<ul id="ul_header_menu"></ul>
 		</details>
-		<h1>Decibot</h1>
+		<h1><span id="infos_connected">⋅</span> Decibot</h1>
 	</header>
 `;
 
