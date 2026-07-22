@@ -3,6 +3,7 @@ export const INFOS_BUTTONS = 0x01;
 let infos_ws = null;
 let period_ms = 500;
 let mask = 0;
+const connected_el = document.getElementById('infos_connected');
 
 export const infos_ms = ms => {
 	if (ms === undefined) return period_ms;
@@ -10,6 +11,15 @@ export const infos_ms = ms => {
 	send_mask(mask);
 };
 window.infos_ms = infos_ms;
+
+function on_open() {
+	connected_el.classList.add('on');
+	send_mask(mask);
+}
+
+function on_close() {
+	connected_el.classList.remove('on');
+}
 
 function on_msg(e) {
 	const view = new DataView(e.data);
@@ -56,8 +66,9 @@ function send_mask() {
 		} else {
 			infos_ws = new WebSocket('ws://' + document.location.host + '/infos.ws');
 			infos_ws.binaryType = "arraybuffer";
-			infos_ws.addEventListener("open", send_mask);
+			infos_ws.addEventListener("open", on_open);
 			infos_ws.addEventListener("message", on_msg);
+			infos_ws.addEventListener("close", on_close);
 		}
 	}
 }

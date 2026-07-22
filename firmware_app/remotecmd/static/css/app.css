@@ -56,6 +56,12 @@ body>header>* {
 	margin: 0 !important;
 }
 
+#infos_connected {
+	color: #C00;
+	font-weight: bold;
+	&.on { color: #0C0; }
+}
+
 .iosensor {
 		background: var(--pico-secondary);
     color: #fff;
