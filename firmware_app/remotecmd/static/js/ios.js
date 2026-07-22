@@ -18,6 +18,11 @@ section.insertAdjacentHTML('beforeend', `
 			<span class="iosensor" id="ios_led_y">Led Y</span>
 			<span class="iosensor" id="ios_led_z">Led Z</span>
 	</p>
+	<p class="grid">
+			<input type="button" value="Toggle Led X" id="ios_led_x_btn" />
+			<input type="button" value="Toggle Led Y" id="ios_led_y_btn" />
+			<input type="button" value="Toggle Led Z" id="ios_led_z_btn" />
+	</p>
 `);
 
 const chk_ios_xp = document.getElementById('ios_xp');
@@ -32,6 +37,12 @@ const chk_ios_zc = document.getElementById('ios_zc');
 const chk_ios_led_x = document.getElementById('ios_led_x');
 const chk_ios_led_y = document.getElementById('ios_led_y');
 const chk_ios_led_z = document.getElementById('ios_led_z');
+
+'xyz'.split('').forEach(
+	l => document.getElementById(`ios_led_${l}_btn`).onclick = _ => {
+		fetch(`/leds/${l}/toggle`);
+	}
+)
 
 document.body.addEventListener('h:infos:buttons', e => {
 	chk_ios_xp.classList.toggle('on', e.detail[0])
