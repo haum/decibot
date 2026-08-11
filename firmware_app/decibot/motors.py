@@ -55,5 +55,4 @@ def mr(p):
 def stop():
     ml(0)
     mr(0)
-    ml_p = mr_p = 0
 

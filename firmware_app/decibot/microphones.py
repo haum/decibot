@@ -3,7 +3,6 @@ import asyncio
 import machine
 import array
 import math
-import time
 import socket
 
 import decibot.config as conf

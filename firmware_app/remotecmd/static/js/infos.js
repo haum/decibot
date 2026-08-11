@@ -8,12 +8,12 @@ const connected_el = document.getElementById('infos_connected');
 export const infos_ms = ms => {
 	if (ms === undefined) return period_ms;
 	period_ms = ms;
-	send_mask(mask);
+	send_mask();
 };
 window.infos_ms = infos_ms;
 
 connected_el.onclick = _e => {
-	send_mask(mask);
+	send_mask();
 }
 connected_el.oncontextmenu = e => {
 	e.preventDefault();
@@ -29,7 +29,7 @@ connected_el.oncontextmenu = e => {
 
 function on_open() {
 	connected_el.classList.add('on');
-	send_mask(mask);
+	send_mask();
 }
 
 function on_close() {

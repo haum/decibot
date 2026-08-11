@@ -28,7 +28,6 @@ document.body.addEventListener('h:infos:micctrl', e => {
 });
 
 document.body.addEventListener('h:section:statechanged', e => {
-	console.log("statechanged", e)
 	infos_mask(INFOS_MICCTRL, e.detail['on']);
 });
 infos_mask(INFOS_MICCTRL, true);
