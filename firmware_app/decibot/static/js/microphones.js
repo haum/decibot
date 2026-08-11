@@ -22,7 +22,11 @@ document.body.addEventListener('h:infos:microphone', e => {
 	const w = mic_canvas.width;
 	const h = mic_canvas.height;
 
-	const scale_v = x => Math.log(1 + 1e-5* x) / Math.log(1 + 1e-5 * 1e9) * w/2;
+	// Peak amplitude reachable by a signed 16 bits sample, as computed by
+	// the firmware: sqrt(2 * mean(x²)) on a full scale sine wave.
+	const full_scale = Math.SQRT2 * 32768;
+	const k = 1e-2;
+	const scale_v = x => Math.log(1 + k * x) / Math.log(1 + k * full_scale) * w/2;
 
 	ctx.resetTransform();
 	ctx.clearRect(0, 0, w, h);
