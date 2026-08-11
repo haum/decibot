@@ -4,8 +4,8 @@ Dépôt pour la course de robot tondeuse pour teriaki 2026
 
 - `firmware_app/decibot/` — firmware du robot (MicroPython, ESP32)
 - `firmware_app/remotecmd/` — firmware de la télécommande (MicroPython, ESP8266)
-- `firmware_app/soundprocess_mpy/` — module natif C optionnel, accélère le
-  calcul d'énergie des micros
+- `firmware_app/soundprocess_mpy/` — module natif C requis par le robot, calcule
+  l'énergie des micros
 - `mic_debug_aquisition.py` — script PC pour capturer le son des micros du robot
 
 Les deux firmwares partagent la même ossature : gestion du wifi, configuration
@@ -90,7 +90,7 @@ Un datagramme ne pilote qu'un seul moteur : il en faut deux pour commander le
 robot. Les datagrammes dont le numéro de robot ne correspond pas sont ignorés,
 ce qui permet d'adresser plusieurs robots sur le même port, en diffusion.
 
-## Module natif `soundprocess` (optionnel)
+## Module natif `soundprocess`
 
 La somme des carrés des échantillons est la seule partie du traitement qui
 tourne à la cadence des échantillons, environ 22000 fois par seconde ; la
@@ -98,8 +98,11 @@ chaîne de filtres qui la consomme ne tourne qu'une dizaine de fois par
 seconde. `firmware_app/soundprocess_mpy/` la sort de MicroPython sous forme
 d'un module natif compilé (`.mpy`).
 
-Le firmware fonctionne sans : si le module est absent, `microphones.py` repasse
-sur sa boucle Python, au prix du temps de calcul.
+**Ce module est requis.** S'il est absent, `microphones.py` s'arrête sur une
+`ImportError` explicite plutôt que de retomber sur une implémentation plus
+lente : le robot fonctionne correctement, ou pas du tout. Comme l'import a lieu
+au démarrage, une carte dépourvue du `.mpy` ne lance rien, interface web
+comprise — il faut alors repasser par l'USB.
 
 Compilation :
 

@@ -10,14 +10,15 @@ import decibot.config as conf
 try:
     import soundprocess
 except ImportError:
-    # Optional: the sum of squares then runs in Python instead. Build and
-    # install it from firmware_app/soundprocess_mpy/ to offload it.
-    soundprocess = None
+    raise ImportError(
+        'soundprocess is required: build it from firmware_app/soundprocess_mpy/'
+        ' and copy soundprocess.mpy onto the board'
+    )
 
 # soundprocess returns sums of squares divided by 2**SCALE_SHIFT, so the
 # amplitude derived from them comes out divided by 2**(SCALE_SHIFT/2). The
 # shift is even by construction, making that factor exact.
-power_scale = 1.0 if soundprocess is None else float(1 << (soundprocess.SCALE_SHIFT // 2))
+power_scale = float(1 << (soundprocess.SCALE_SHIFT // 2))
 
 sck_pin = machine.Pin(conf.get('pin_i2s_sck'))  # Serial clock
 sd_pin  = machine.Pin(conf.get('pin_i2s_sd'))   # Serial data
@@ -40,8 +41,11 @@ audio_in = machine.I2S(
 )
 
 nt = 0
-acc_l = 0.0
-acc_r = 0.0
+# soundprocess returns values below 2**28, so a measurement window of 2048
+# frames stays within a small integer: exact, and no soft float on a chip
+# without an FPU.
+acc_l = 0
+acc_r = 0
 power_fast_l = 0
 power_fast_r = 0
 power_slow_l = 0
@@ -60,16 +64,9 @@ def process_buffer(buf, n):
     global ml_p, mr_p
 
     nframes = n//4
-    if soundprocess is None:
-        for i in range(nframes):
-            l = buf[2*i]
-            r = buf[2*i+1]
-            acc_l += l*l
-            acc_r += r*r
-    else:
-        el, er = soundprocess.energy(buf, n)
-        acc_l += el
-        acc_r += er
+    el, er = soundprocess.energy(buf, n)
+    acc_l += el
+    acc_r += er
 
     nt += nframes
     if nt >= 2048:
@@ -92,8 +89,8 @@ def process_buffer(buf, n):
         mr_p += a_r * ((1 if power_fast_r > power_slow_r * r else 0) - mr_p)
 
         nt = 0
-        acc_l = 0.0
-        acc_r = 0.0
+        acc_l = 0
+        acc_r = 0
 
 
 async def start():
