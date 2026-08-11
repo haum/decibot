@@ -11,8 +11,20 @@ mr_rpwm = machine.PWM(machine.Pin(conf.get('pin_mr_rpwm')), freq=24000, duty_u16
 ml_p = 0
 mr_p = 0
 
+inhibited = False
+
+def inhibit(on):
+    # Safety interlock. While set, no command source (microphone control,
+    # websocket joystick, UDP command) can spin the motors.
+    global inhibited
+    if on == inhibited: return
+    inhibited = on
+    if on:
+        stop()
+
 def ml(p):
     global ml_p
+    if inhibited: p = 0
     ml_p = max(-1, min(p, 1))
     if p > 0:
         ml_lpwm.duty_u16(0)
@@ -23,6 +35,7 @@ def ml(p):
 
 def mr(p):
     global mr_p
+    if inhibited: p = 0
     mr_p = max(-1, min(p, 1))
     if p > 0:
         mr_lpwm.duty_u16(0)

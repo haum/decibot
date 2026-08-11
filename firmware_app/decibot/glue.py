@@ -14,13 +14,13 @@ async def start():
 
         v_stop = sensors.in_stop1.value() or sensors.in_stop2.value()
         v_wheels = sensors.in_wheel_l.value() and sensors.in_wheel_r.value()
-        if v_stop or v_wheels:
-            if mic_ctrl:
-                mic_ctrl = False
-                mot.ml(0)
-                mot.mr(0)
 
-        if mic_ctrl:
+        halt = v_stop or v_wheels
+        mot.inhibit(halt)
+
+        if halt:
+            mic_ctrl = False
+        elif mic_ctrl:
             mot.ml(mic.ml_p)
             mot.mr(mic.mr_p)
 
