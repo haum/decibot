@@ -24,10 +24,10 @@ connected_el.oncontextmenu = e => {
 	const p_raw = prompt('Period (ms) ?', period_ms);
 	const p = +p_raw;
 	if (p_raw === null) return;
-	if (Number.isFinite(p) && p >= 50) {
+	if (Number.isFinite(p) && p >= 50 && p <= 2550) {
 		infos_ms(p);
 	} else {
-		alert("Invalid value `" + p_raw + "` ⇒ `" + p + "`, must be >= 50 (ms)")
+		alert("Invalid value `" + p_raw + "` ⇒ `" + p + "`, must be between 50 and 2550 (ms)")
 	}
 }
 
@@ -114,7 +114,8 @@ function send_mask() {
 		if (infos_ws) {
 			if (infos_ws.readyState == WebSocket.OPEN) {
 				const buf = new Uint8Array(2);
-				buf[0] = period_ms / 10;
+				// The period travels as a single byte of 10 ms units.
+				buf[0] = Math.min(255, Math.max(1, Math.round(period_ms / 10)));
 				buf[1] = mask;
 				infos_ws.send(buf);
 			}
