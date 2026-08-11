@@ -18,7 +18,7 @@ def init_configs():
     c('pin_led_x', 16, int)
     c('pin_led_y', 0, int)
     c('pin_led_z', 2, int)
-    c('pin_led', -1, int)  # -1: none, GPIO2 already drives led_z
+    c('pin_led', 2, int)
 
 
 notify_changes_cbs = {}
