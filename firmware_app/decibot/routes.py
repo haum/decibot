@@ -88,8 +88,10 @@ async def mic_ctrl_on_handler(rq):
     await rq.w('OK');
 
 @web.route('GET', '/mic_ctrl/off')
-async def mic_ctrl_on_handler(rq):
-    glue.mic_ctrl = True
+async def mic_ctrl_off_handler(rq):
+    glue.mic_ctrl = False
+    motors.ml(0)
+    motors.mr(0)
     await rq.header_text()
     await rq.w('OK');
 

@@ -10,16 +10,21 @@ section.insertAdjacentHTML('beforeend', `
 
 const el_ind = document.getElementById('micctrl_indicator');
 const el_btn = document.getElementById('micctrl_btn');
+let enabled = false;
 
 el_btn.addEventListener('click', _ => {
-	fetch('/mic_ctrl/on');
+	if (enabled)
+		fetch('/mic_ctrl/off');
+	else
+		fetch('/mic_ctrl/on');
 })
 
 document.body.addEventListener('h:infos:micctrl', e => {
 	const v_mic_ctrl = e.detail[0];
 
+	enabled = v_mic_ctrl;
 	el_ind.classList.toggle('on', v_mic_ctrl);
-	el_btn.disabled = v_mic_ctrl;
+	el_btn.value = (enabled ? "Désactiver" : "Activer") + " MicCtrl"
 });
 
 document.body.addEventListener('h:section:statechanged', e => {
