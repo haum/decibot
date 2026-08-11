@@ -10,15 +10,22 @@ import decibot.config as conf
 try:
     import soundprocess
 except ImportError:
-    raise ImportError(
-        'soundprocess is required: build it from firmware_app/soundprocess_mpy/'
-        ' and copy soundprocess.mpy onto the board'
-    )
+    # Without it nothing is computed from the microphones, but the rest of the
+    # firmware still comes up: the web interface stays reachable, which is how
+    # anyone would notice and diagnose this in the first place.
+    soundprocess = None
+    print('''
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! soundprocess module not found: sound is NOT processed.            !!
+!! Build it from firmware_app/soundprocess_mpy/ and copy             !!
+!! soundprocess.mpy onto the board.                                  !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+''')
 
 # soundprocess returns sums of squares divided by 2**SCALE_SHIFT, so the
 # amplitude derived from them comes out divided by 2**(SCALE_SHIFT/2). The
 # shift is even by construction, making that factor exact.
-power_scale = float(1 << (soundprocess.SCALE_SHIFT // 2))
+power_scale = 1.0 if soundprocess is None else float(1 << (soundprocess.SCALE_SHIFT // 2))
 
 sck_pin = machine.Pin(conf.get('pin_i2s_sck'))  # Serial clock
 sd_pin  = machine.Pin(conf.get('pin_i2s_sd'))   # Serial data
@@ -62,6 +69,11 @@ def process_buffer(buf, n):
     global power_fast_l, power_fast_r
     global power_slow_l, power_slow_r
     global ml_p, mr_p
+
+    if soundprocess is None:
+        # Every output stays at zero, so microphone control can never command
+        # the motors, and the web interface shows a flat signal.
+        return
 
     nframes = n//4
     el, er = soundprocess.energy(buf, n)
