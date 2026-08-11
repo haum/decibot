@@ -29,8 +29,8 @@ audio_in = machine.I2S(
 )
 
 nt = 0
-acc_l = 0
-acc_r = 0
+acc_l = 0.0
+acc_r = 0.0
 power_fast_l = 0
 power_fast_r = 0
 power_slow_l = 0
@@ -40,17 +40,22 @@ mr_p = 0
 
 @micropython.native
 def process_buffer(buf, n):
+    # buf is an array of signed 16 bits samples, interleaved L/R.
+    # n is the number of *bytes* filled by readinto, so n//4 stereo frames.
     global nt
     global acc_l, acc_r
     global power_fast_l, power_fast_r
     global power_slow_l, power_slow_r
     global ml_p, mr_p
 
-    for i in range(n//2):
-        acc_l += buf[2*i]**2
-        acc_r += buf[2*i+1]**2
+    nframes = n//4
+    for i in range(nframes):
+        l = buf[2*i]
+        r = buf[2*i+1]
+        acc_l += l*l
+        acc_r += r*r
 
-    nt += n//2
+    nt += nframes
     if nt >= 2048:
         dt = nt/samplerate
 
@@ -77,16 +82,16 @@ async def start():
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_socket.setblocking(False)
  
-    buf = bytearray(bufsz)
+    buf = array.array('h', bytearray(bufsz))
     sreader = asyncio.StreamReader(audio_in)
- 
+
     try:
         while True:
             n = await sreader.readinto(buf)
             if n > 0:
                 process_buffer(buf, n)
                 if debug_addr:
-                    udp_socket.sendto(buf[:n], debug_addr)
+                    udp_socket.sendto(buf[:n//2], debug_addr)
             await asyncio.sleep_ms(0) 
 
     except Exception as e:
