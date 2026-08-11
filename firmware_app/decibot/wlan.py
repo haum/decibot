@@ -6,13 +6,16 @@ from machine import Pin
 
 import decibot.config as conf
 
-LED_builtin = Pin(conf.get('pin_led'), Pin.OUT)
+_led_pin = conf.get('pin_led')
+LED_builtin = Pin(_led_pin, Pin.OUT) if _led_pin >= 0 else None
 
 wlan = network.WLAN(network.STA_IF)
 mac = wlan.config('mac')
 hostname = 'decibot-' + ''.join('{:02x}'.format(b) for b in mac[3:])
 
 def led_state(on):
+    if LED_builtin is None:  # no wifi status LED on this board
+        return
     if on == None:
         LED_builtin.value(not LED_builtin.value())
     else:
