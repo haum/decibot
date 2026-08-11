@@ -108,10 +108,14 @@ cd firmware_app/soundprocess_mpy
 ./build.sh
 ```
 
-Le script clone MicroPython (`MICROPY_TAG`, `v1.28.0` par défaut) et cherche une
-chaîne de compilation RISC-V. Aucun ESP-IDF n'est nécessaire : un module natif
-ne se lie qu'à la table d'exécution de MicroPython. Sur Arch,
-`pacman -S riscv64-elf-gcc` suffit ; sinon `CROSS=<préfixe>- ./build.sh`.
+Le script clone MicroPython `v1.28.0` et ESP-IDF `v5.5.1` dans `/tmp`, puis
+lance `make`.
+
+Il faut par ailleurs disposer d'une chaîne de compilation RISC-V bare metal :
+pour `rv32imc`, `dynruntime.mk` utilise le préfixe `riscv64-unknown-elf-`. Sur
+Arch, `pacman -S riscv64-elf-gcc` ; on peut aussi pointer explicitement sur une
+chaîne installée avec `make CROSS=<préfixe>-` (par exemple
+`riscv32-esp-elf-`, celle fournie par ESP-IDF pour les cibles RISC-V).
 
 `ARCH` vaut `rv32imc` (ESP32-C3/C6). Pour une cible Xtensa (ESP32/S3), utiliser
 `ARCH=xtensawin` et la chaîne correspondante — le `.mpy` produit est spécifique
