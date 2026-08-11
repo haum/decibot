@@ -108,11 +108,15 @@ async def mic_ctrl_off_handler(rq):
 async def debug_mic_ip_handler(rq):
     await rq.header_text()
     v = rq.path[16:].split(':')
-    if v[0]:
-        if len(v) == 1:
-            v.append(9000)
-        v[1] = int(v[1])
-        mic.debug_addr = v[:2] if v[0] != 'None' else None
+    if v[0] == 'None':
+        mic.debug_addr = None
+    elif v[0]:
+        try:
+            port = int(v[1]) if len(v) > 1 else 9000
+        except ValueError:
+            await rq.w('KO')
+            return
+        mic.debug_addr = [v[0], port]
     await rq.w(str(mic.debug_addr))
 
 @web.route('GET', '/udpcmd/on')
