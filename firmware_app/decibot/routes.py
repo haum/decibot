@@ -18,7 +18,7 @@ async def root_handler(rq):
 
 
 @web.route('GET', '/static/', True)
-async def root_handler(rq):
+async def static_handler(rq):
     await rq.sendfile(rq.path[8:], 'decibot/static/')
 
 
