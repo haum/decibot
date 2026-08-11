@@ -163,7 +163,7 @@ document.body.addEventListener('h:infos:motors', e => {
 	ctx.fill();
 
 	ctx.beginPath();
-	if (ml > 0)
+	if (mr > 0)
 		ctx.rect(w/2, (h/2-m)+m+1, mr*(w/2-m), (h/2-m)-2);
 	else
 		ctx.rect(w/2+mr*(w/2-m), (h/2-m)+m+1, -mr*(w/2-m), (h/2-m)-2);
