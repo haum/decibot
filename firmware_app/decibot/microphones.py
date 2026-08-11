@@ -7,6 +7,18 @@ import socket
 
 import decibot.config as conf
 
+try:
+    import soundprocess
+except ImportError:
+    # Optional: the sum of squares then runs in Python instead. Build and
+    # install it from firmware_app/soundprocess_mpy/ to offload it.
+    soundprocess = None
+
+# soundprocess returns sums of squares divided by 2**SCALE_SHIFT, so the
+# amplitude derived from them comes out divided by 2**(SCALE_SHIFT/2). The
+# shift is even by construction, making that factor exact.
+power_scale = 1.0 if soundprocess is None else float(1 << (soundprocess.SCALE_SHIFT // 2))
+
 sck_pin = machine.Pin(conf.get('pin_i2s_sck'))  # Serial clock
 sd_pin  = machine.Pin(conf.get('pin_i2s_sd'))   # Serial data
 ws_pin  = machine.Pin(conf.get('pin_i2s_ws'))   # Word select
@@ -48,11 +60,16 @@ def process_buffer(buf, n):
     global ml_p, mr_p
 
     nframes = n//4
-    for i in range(nframes):
-        l = buf[2*i]
-        r = buf[2*i+1]
-        acc_l += l*l
-        acc_r += r*r
+    if soundprocess is None:
+        for i in range(nframes):
+            l = buf[2*i]
+            r = buf[2*i+1]
+            acc_l += l*l
+            acc_r += r*r
+    else:
+        el, er = soundprocess.energy(buf, n)
+        acc_l += el
+        acc_r += er
 
     nt += nframes
     if nt >= 2048:
@@ -63,8 +80,8 @@ def process_buffer(buf, n):
         a_r = 1-math.exp(-5*dt/conf.get('mic_filter_5tau_ratio'))
         r = conf.get('mic_filter_ratio')
 
-        p_l = math.sqrt(2*acc_l/nt)
-        p_r = math.sqrt(2*acc_r/nt)
+        p_l = math.sqrt(2*acc_l/nt) * power_scale
+        p_r = math.sqrt(2*acc_r/nt) * power_scale
 
         power_fast_l += a_f * (p_l - power_fast_l)
         power_fast_r += a_f * (p_r - power_fast_r)
