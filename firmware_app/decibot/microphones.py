@@ -76,6 +76,8 @@ def process_buffer(buf, n):
         mr_p += a_r * ((1 if power_fast_r > power_slow_r * r else 0) - mr_p)
 
         nt = 0
+        acc_l = 0.0
+        acc_r = 0.0
 
 
 async def start():
