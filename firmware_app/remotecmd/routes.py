@@ -86,7 +86,12 @@ async def wlan_delete_handler(rq):
 async def wlan_sort_handler(rq):
     form = await rq.decode_postform_data()
     networks = wlan.load_networks()
-    ranks = (form.get(str(i+1), 1000) for i in range(len(networks)))
+    def rank(i):
+        try:
+            return int(form.get(str(i+1), 1000))
+        except ValueError:
+            return 1000
+    ranks = (rank(i) for i in range(len(networks)))
     wlan.save_networks([n for _, _, n in sorted(zip(ranks, range(len(networks)), networks))])
     await rq.header_text()
     await rq.w('OK');
