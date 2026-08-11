@@ -23,7 +23,13 @@ def load_networks():
     try:
         with open('wifi.dat', 'r') as f:
             for line in f:
-                res.append(line.strip().split(';', 1))
+                line = line.strip()
+                if not line:
+                    continue
+                n = line.split(';', 1)
+                if len(n) == 1:  # open network, or password-less line
+                    n.append('')
+                res.append(n)
     except OSError:
         pass
     return res

@@ -49,8 +49,12 @@ async def wlan_password_handler(rq):
     networks = wlan.load_networks()
     form = await rq.decode_postform_data()
     ssid = form.get('ssid')
-    pwd = form.get('password')
-    if ssid in next(zip(*networks)):
+    pwd = form.get('password', '')
+    if not ssid:
+        await rq.header_text()
+        await rq.w('KO')
+        return
+    if any(n[0] == ssid for n in networks):
         wlan.save_networks([[ssid, pwd] if n[0] == ssid else n for n in networks])
     else:
         networks.append([ssid, pwd])
