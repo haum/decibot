@@ -25,6 +25,10 @@ const c_mic_filters = [
   ['mic_filter_ratio', 'Ratio déclenchement moteur'],
 ]
 
+const c_safety = [
+  ['cmd_timeout_ms', 'Timeout commande (ms)'],
+]
+
 const c_udpcmd = [
 	['listen_ip', 'Adresse d\'écoute'],
 	['listen_port', 'port d\'écoute'],
@@ -70,6 +74,11 @@ function setup_form() {
 	h_mic_filters.innerText = 'Filtres microphone'
 	form.append(h_mic_filters);
 	for (const l of c_mic_filters) add_input(l);
+
+	const h_safety = document.createElement('h3');
+	h_safety.innerText = 'Sécurité'
+	form.append(h_safety);
+	for (const l of c_safety) add_input(l);
 
 	const h_udpcmd = document.createElement('h3');
 	h_udpcmd.innerText = 'UDP command'

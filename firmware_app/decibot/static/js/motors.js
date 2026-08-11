@@ -21,8 +21,11 @@ const motors_joystick = document.getElementById('motors_joystick');
 const motors_canvas = document.getElementById('motors_canvas');
 
 let motors_ws = null;
+let last_vl = 0, last_vr = 0;
 
 const send_motors = (vl, vr) => {
+	last_vl = vl;
+	last_vr = vr;
 	if (motors_ws && motors_ws.readyState == WebSocket.OPEN) {
 		const lim = v => Math.max(-1, Math.min(v, 1));
 		motors_buf[0] = lim(vl);
@@ -35,6 +38,14 @@ const send_motors = (vl, vr) => {
 		motors_ws.addEventListener("open", () => send_motors(vl, vr));
 	}
 };
+
+// The firmware stops the motors when it stops hearing from a command source
+// (see cmd_timeout_ms), so a held joystick or a slider left in position has to
+// keep refreshing its setpoint.
+const keepalive_ms = 100;
+setInterval(() => {
+	if (last_vl || last_vr) send_motors(last_vl, last_vr);
+}, keepalive_ms);
 
 const update_motors = () => {
 	const vl = motors_ml.value / 100;
@@ -89,7 +100,7 @@ const updatePosition = e => {
 	positionX = vx * kw;
 	positionY = vy * kw;
 	vy *= -1;
-	if (performance.now() - lastsend > 250) {
+	if (performance.now() - lastsend > keepalive_ms) {
 		send_motors(vy+vx, vy-vx);
 		lastsend = performance.now();
 	}

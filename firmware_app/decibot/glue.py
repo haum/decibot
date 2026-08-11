@@ -1,6 +1,7 @@
 import asyncio
 import time
 
+import decibot.config as conf
 import decibot.motors as mot
 import decibot.microphones as mic
 import decibot.sensors as sensors
@@ -23,5 +24,9 @@ async def start():
         elif mic_ctrl:
             mot.ml(mic.ml_p)
             mot.mr(mic.mr_p)
+        elif (mot.ml_p or mot.mr_p) and mot.idle_ms() > conf.get('cmd_timeout_ms'):
+            # A remote command source that goes silent (browser tab closed,
+            # wifi drop, UDP pilot crashed) must not leave the robot running.
+            mot.stop()
 
         await asyncio.sleep_ms(max(0, 50 - (time.ticks_ms() - start)))

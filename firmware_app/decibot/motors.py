@@ -1,4 +1,5 @@
 import machine
+import time
 
 import decibot.config as conf
 
@@ -12,6 +13,11 @@ ml_p = 0
 mr_p = 0
 
 inhibited = False
+last_cmd_ms = time.ticks_ms()
+
+def idle_ms():
+    # Time elapsed since the last command received, whatever its source.
+    return time.ticks_diff(time.ticks_ms(), last_cmd_ms)
 
 def inhibit(on):
     # Safety interlock. While set, no command source (microphone control,
@@ -23,8 +29,9 @@ def inhibit(on):
         stop()
 
 def ml(p):
-    global ml_p
+    global ml_p, last_cmd_ms
     if inhibited: p = 0
+    last_cmd_ms = time.ticks_ms()
     ml_p = max(-1, min(p, 1))
     if p > 0:
         ml_lpwm.duty_u16(0)
@@ -34,8 +41,9 @@ def ml(p):
         ml_lpwm.duty_u16(int(-ml_p*65535))
 
 def mr(p):
-    global mr_p
+    global mr_p, last_cmd_ms
     if inhibited: p = 0
+    last_cmd_ms = time.ticks_ms()
     mr_p = max(-1, min(p, 1))
     if p > 0:
         mr_lpwm.duty_u16(0)
