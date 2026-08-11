@@ -4,6 +4,8 @@ Dépôt pour la course de robot tondeuse pour teriaki 2026
 
 - `firmware_app/decibot/` — firmware du robot (MicroPython, ESP32)
 - `firmware_app/remotecmd/` — firmware de la télécommande (MicroPython, ESP8266)
+- `firmware_app/soundprocess_mpy/` — module natif C optionnel, accélère le
+  calcul d'énergie des micros
 - `mic_debug_aquisition.py` — script PC pour capturer le son des micros du robot
 
 Les deux firmwares partagent la même ossature : gestion du wifi, configuration
@@ -87,6 +89,42 @@ Chaque datagramme fait exactement 5 octets, au format `struct` `>Bf` :
 Un datagramme ne pilote qu'un seul moteur : il en faut deux pour commander le
 robot. Les datagrammes dont le numéro de robot ne correspond pas sont ignorés,
 ce qui permet d'adresser plusieurs robots sur le même port, en diffusion.
+
+## Module natif `soundprocess` (optionnel)
+
+La somme des carrés des échantillons est la seule partie du traitement qui
+tourne à la cadence des échantillons, environ 22000 fois par seconde ; la
+chaîne de filtres qui la consomme ne tourne qu'une dizaine de fois par
+seconde. `firmware_app/soundprocess_mpy/` la sort de MicroPython sous forme
+d'un module natif compilé (`.mpy`).
+
+Le firmware fonctionne sans : si le module est absent, `microphones.py` repasse
+sur sa boucle Python, au prix du temps de calcul.
+
+Compilation :
+
+```
+cd firmware_app/soundprocess_mpy
+./build.sh
+```
+
+Le script clone MicroPython (`MICROPY_TAG`, `v1.28.0` par défaut) et cherche une
+chaîne de compilation RISC-V. Aucun ESP-IDF n'est nécessaire : un module natif
+ne se lie qu'à la table d'exécution de MicroPython. Sur Arch,
+`pacman -S riscv64-elf-gcc` suffit ; sinon `CROSS=<préfixe>- ./build.sh`.
+
+`ARCH` vaut `rv32imc` (ESP32-C3/C6). Pour une cible Xtensa (ESP32/S3), utiliser
+`ARCH=xtensawin` et la chaîne correspondante — le `.mpy` produit est spécifique
+à l'architecture.
+
+Installation : copier `soundprocess.mpy` à la racine du système de fichiers de
+la carte, à côté de `main.py`.
+
+Le calcul se vérifie sans carte ni chaîne croisée :
+
+```
+gcc -Wall -Wextra -O2 -o /tmp/sp_test test_soundprocess.c && /tmp/sp_test
+```
 
 ## Capture du son des micros
 
