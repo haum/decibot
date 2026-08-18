@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decibot — trajectoire</title>
+<style>
+:root {
+    color-scheme: light dark;
+    --bg: #f4f6f4;
+    --panel: #ffffff;
+    --ink: #1b211b;
+    --muted: #667066;
+    --line: #d6ddd6;
+    --accent: #2e7d32;
+    --accent-ink: #ffffff;
+    --grid: #dde4dd;
+    --grid-major: #c3cdc3;
+    --trail: #2e7d32;
+    --alert: #c62828;
+    --ok: #2e7d32;
+    --off: #9aa39a;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #11150f;
+        --panel: #1a1f18;
+        --ink: #e3e8e0;
+        --muted: #8d968a;
+        --line: #2c3429;
+        --accent: #7cc47f;
+        --accent-ink: #0f130e;
+        --grid: #222a20;
+        --grid-major: #33402f;
+        --trail: #7cc47f;
+        --alert: #ef5350;
+        --ok: #7cc47f;
+        --off: #4a544700;
+    }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+}
+header h1 {
+    font-size: 15px;
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: .01em;
+    white-space: nowrap;
+}
+.dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--off);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--off) 25%, transparent);
+    flex: none;
+    transition: background .2s;
+}
+.dot.on { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+.dot.wait { background: #e0a300; box-shadow: 0 0 0 3px #e0a30040; }
+
+input, button, select {
+    font: inherit;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 9px;
+}
+input[type=number] { width: 5.5em; }
+input:focus, button:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+button { cursor: pointer; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button:hover { border-color: var(--accent); }
+label.check { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; }
+
+main { flex: 1; display: flex; min-height: 0; }
+#stage { flex: 1; position: relative; min-width: 0; }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+canvas.drag { cursor: grabbing; }
+
+aside {
+    width: 260px;
+    flex: none;
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    padding: 14px;
+    overflow-y: auto;
+}
+aside h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--muted);
+    margin: 18px 0 8px;
+    font-weight: 600;
+}
+aside h2:first-child { margin-top: 0; }
+
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 3px 0; }
+.row span:first-child { color: var(--muted); }
+.row b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.field { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; }
+.field label { color: var(--muted); }
+.btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.btns button { flex: 1; min-width: 90px; }
+
+.bar { height: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; position: relative; overflow: hidden; }
+.bar i { position: absolute; top: 0; bottom: 0; background: var(--accent); }
+.flags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.flag {
+    font-size: 11px; padding: 2px 7px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted);
+}
+.flag.on { background: var(--alert); border-color: var(--alert); color: #fff; font-weight: 600; }
+
+.note {
+    margin-top: 16px; padding: 9px 10px;
+    border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    color: var(--muted); font-size: 12px; line-height: 1.4;
+    border-radius: 0 5px 5px 0;
+}
+#err { color: var(--alert); font-size: 12px; padding: 0 16px 8px; display: none; }
+@media (max-width: 760px) {
+    main { flex-direction: column; }
+    aside { width: auto; border-left: none; border-top: 1px solid var(--line); max-height: 45vh; }
+    #stage { min-height: 50vh; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Decibot — trajectoire</h1>
+    <span class="dot" id="dot"></span>
+    <span id="state" style="color:var(--muted)">déconnecté</span>
+    <span style="flex:1"></span>
+    <input id="host" placeholder="decibot-xxxxxx  ou  192.168.1.42" size="26">
+    <button id="connect" class="primary">Connecter</button>
+    <label class="check"><input type="checkbox" id="demo"> Démo</label>
+</header>
+<div id="err"></div>
+
+<main>
+    <div id="stage"><canvas id="cv"></canvas></div>
+    <aside>
+        <h2>État</h2>
+        <div class="row"><span>Moteur gauche</span><b id="v_ml">0.00</b></div>
+        <div class="bar"><i id="b_ml"></i></div>
+        <div class="row" style="margin-top:6px"><span>Moteur droit</span><b id="v_mr">0.00</b></div>
+        <div class="bar"><i id="b_mr"></i></div>
+        <div class="flags">
+            <span class="flag" id="f_stop">STOP</span>
+            <span class="flag" id="f_lift_l">Levage G</span>
+            <span class="flag" id="f_lift_r">Levage D</span>
+        </div>
+
+        <h2>Position estimée</h2>
+        <div class="row"><span>X</span><b><span id="v_x">0.00</span> m</b></div>
+        <div class="row"><span>Y</span><b><span id="v_y">0.00</span> m</b></div>
+        <div class="row"><span>Cap</span><b><span id="v_th">0</span>°</b></div>
+        <div class="row"><span>Vitesse</span><b><span id="v_v">0.00</span> m/s</b></div>
+        <div class="row"><span>Distance</span><b><span id="v_d">0.00</span> m</b></div>
+        <div class="row"><span>Rotation</span><b><span id="v_w">0</span>°/s</b></div>
+        <div class="row"><span>Régime roues</span><b><span id="v_rpm">0</span> tr/min</b></div>
+
+        <h2>Vue</h2>
+        <div class="field">
+            <label for="zoom">Zoom</label>
+            <input type="range" id="zoom" min="10" max="300" value="70" style="width:120px">
+        </div>
+        <label class="check"><input type="checkbox" id="follow"> Suivre le robot</label>
+        <div class="btns">
+            <button id="recenter">Recentrer</button>
+            <button id="clear">Effacer la trace</button>
+        </div>
+
+        <h2>Calibration</h2>
+        <div class="field">
+            <label for="vmax">Vitesse max</label>
+            <input type="number" id="vmax" value="0.60" min="0.05" max="5" step="0.05">
+        </div>
+        <div class="field">
+            <label for="track">Voie (essieu)</label>
+            <input type="number" id="track" value="0.31" min="0.05" max="2" step="0.01">
+        </div>
+        <div class="field">
+            <label for="wheel">Roue &#8709;</label>
+            <input type="number" id="wheel" value="0.16" min="0.02" max="1" step="0.01">
+        </div>
+
+        <div class="note">
+            Le robot n'a pas d'encodeurs : cette trajectoire est <b>intégrée à partir des
+            consignes moteur</b>, pas mesurée. Elle dérive avec le patinage, l'inertie et la
+            baisse de batterie. Les valeurs par défaut sont les mesures du robot
+            (voie 31&nbsp;cm, roues &#8709;16&nbsp;cm, 60&nbsp;cm/s).
+        </div>
+    </aside>
+</main>
+
+<script>
+'use strict';
+
+/* ---------- protocole infos.ws (voir firmware_app/decibot/routes.py) ---------- */
+const INFOS_MICROPHONE = 0x01;
+const INFOS_MOTORS     = 0x02;
+const INFOS_IOSENSORS  = 0x04;
+const INFOS_MICCTRL    = 0x08;
+const INFOS_UDPCMD     = 0x10;
+
+const WANTED_MASK = INFOS_MOTORS | INFOS_IOSENSORS;
+const PERIOD_MS = 100;
+
+// Le serveur préfixe chaque trame du masque, puis empile les blocs dans
+// l'ordre des bits. On décode génériquement : au premier message le masque
+// est encore celui par défaut (micros), pas celui qu'on a demandé.
+function parseInfos(buffer) {
+    const v = new DataView(buffer);
+    let p = 0;
+    const mask = v.getUint8(p); p += 1;
+    const out = {};
+    if (mask & INFOS_MICROPHONE) p += 18;          // >ffffBB
+    if (mask & INFOS_MOTORS) {                     // >ff, big endian
+        out.ml = v.getFloat32(p);
+        out.mr = v.getFloat32(p + 4);
+        p += 8;
+    }
+    if (mask & INFOS_IOSENSORS) {
+        out.stop = !!v.getUint8(p) || !!v.getUint8(p + 1);
+        out.liftL = !!v.getUint8(p + 2);
+        out.liftR = !!v.getUint8(p + 3);
+        p += 4;
+    }
+    if (mask & INFOS_MICCTRL) { out.micCtrl = !!v.getUint8(p); p += 1; }
+    if (mask & INFOS_UDPCMD)  { out.udpCmd  = !!v.getUint8(p); p += 1; }
+    return out;
+}
+
+/* ---------- état ---------- */
+const pose = { x: 0, y: 0, th: 0 };     // mètres, radians, repère de départ
+let trail = [{ x: 0, y: 0, halt: false }];
+let distance = 0;
+let cur = { ml: 0, mr: 0, stop: false, liftL: false, liftR: false };
+let speed = 0, omega = 0;
+let bladeAngle = 0;
+
+const view = { scale: 70, cx: 0, cy: 0, follow: false };   // cx/cy : centre en mètres
+// Mesures réelles du robot : voie 31 cm, roues Ø16 cm, 60 cm/s en bout de roue.
+let params = { vmax: 0.60, track: 0.31, wheel: 0.16 };
+
+/* ---------- cinématique différentielle ---------- */
+function integrate(dt, ml, mr) {
+    const vl = ml * params.vmax;
+    const vr = mr * params.vmax;
+    const v = (vl + vr) / 2;
+    const w = (vr - vl) / params.track;
+
+    // Cap au milieu du pas : bien plus juste qu'Euler simple en virage.
+    const thMid = pose.th + w * dt / 2;
+    pose.x += v * Math.cos(thMid) * dt;
+    pose.y += v * Math.sin(thMid) * dt;
+    pose.th += w * dt;
+    while (pose.th > Math.PI) pose.th -= 2 * Math.PI;
+    while (pose.th < -Math.PI) pose.th += 2 * Math.PI;
+
+    speed = v;
+    omega = w;
+    distance += Math.abs(v) * dt;
+    bladeAngle += (0.6 + Math.abs(v) * 8) * dt;
+
+    const last = trail[trail.length - 1];
+    const halt = cur.stop || (cur.liftL && cur.liftR);
+    if (Math.hypot(pose.x - last.x, pose.y - last.y) > 0.01 || halt !== last.halt) {
+        trail.push({ x: pose.x, y: pose.y, halt: halt });
+        if (trail.length > 20000) trail.splice(0, 5000);
+    }
+}
+
+/* ---------- websocket ---------- */
+let ws = null, wantConnected = false, retry = null, lastMsg = 0;
+
+const el = id => document.getElementById(id);
+const dot = el('dot'), stateEl = el('state'), errEl = el('err');
+
+function setState(txt, cls) {
+    stateEl.textContent = txt;
+    dot.className = 'dot' + (cls ? ' ' + cls : '');
+}
+function showError(msg) {
+    errEl.textContent = msg;
+    errEl.style.display = msg ? 'block' : 'none';
+}
+
+function connect() {
+    const host = el('host').value.trim();
+    if (!host) { showError("Renseignez le nom d'hôte ou l'IP du robot."); return; }
+    localStorage.setItem('decibot_host', host);
+    wantConnected = true;
+    showError('');
+    open(host);
+}
+
+function open(host) {
+    if (ws) { try { ws.close(); } catch (e) {} }
+    setState('connexion…', 'wait');
+    let sock;
+    try {
+        sock = new WebSocket('ws://' + host + '/infos.ws');
+    } catch (e) {
+        showError('URL invalide : ' + e.message);
+        setState('déconnecté');
+        return;
+    }
+    ws = sock;
+    sock.binaryType = 'arraybuffer';
+
+    sock.addEventListener('open', () => {
+        setState('connecté', 'on');
+        showError('');
+        lastMsg = performance.now();
+        const buf = new Uint8Array(2);
+        buf[0] = Math.min(255, Math.max(1, Math.round(PERIOD_MS / 10)));
+        buf[1] = WANTED_MASK;
+        sock.send(buf);
+    });
+
+    sock.addEventListener('message', ev => {
+        const now = performance.now();
+        const dt = Math.min((now - lastMsg) / 1000, 0.5);   // borné : pas de saut après une coupure
+        lastMsg = now;
+        let d;
+        try { d = parseInfos(ev.data); } catch (e) { return; }
+        if (d.ml === undefined) return;                     // trame sans bloc moteurs
+        Object.assign(cur, d);
+        integrate(dt, d.ml, d.mr);
+    });
+
+    const closed = () => {
+        if (ws !== sock) return;
+        ws = null;
+        if (wantConnected) {
+            setState('reconnexion…', 'wait');
+            clearTimeout(retry);
+            retry = setTimeout(() => wantConnected && open(host), 1500);
+        } else {
+            setState('déconnecté');
+        }
+    };
+    sock.addEventListener('close', closed);
+    sock.addEventListener('error', closed);
+}
+
+function disconnect() {
+    wantConnected = false;
+    clearTimeout(retry);
+    if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+    setState('déconnecté');
+}
+
+/* ---------- mode démo ---------- */
+let demoT = 0;
+function demoStep(dt) {
+    demoT += dt;
+    // Fuite plausible : avance soutenue, embardées irrégulières.
+    const turn = 0.55 * Math.sin(demoT * 0.7) + 0.35 * Math.sin(demoT * 2.3 + 1.1);
+    const fwd = 0.75 + 0.2 * Math.sin(demoT * 0.35);
+    cur.ml = Math.max(-1, Math.min(1, fwd + turn * 0.5));
+    cur.mr = Math.max(-1, Math.min(1, fwd - turn * 0.5));
+    cur.stop = false; cur.liftL = false; cur.liftR = false;
+    integrate(dt, cur.ml, cur.mr);
+}
+
+/* ---------- rendu ---------- */
+const cv = el('cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0;
+
+function resize() {
+    const r = cv.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    W = r.width; H = r.height;
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+new ResizeObserver(resize).observe(el('stage'));
+
+function css(name) { return getComputedStyle(document.body).getPropertyValue(name).trim(); }
+
+function drawGrid(originX, originY, s) {
+    // Pas de grille adapté au zoom : 0.25 / 0.5 / 1 / 2 / 5 / 10 m
+    const steps = [0.25, 0.5, 1, 2, 5, 10, 25];
+    let step = steps.find(v => v * s >= 45) || 50;
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = css('--grid');
+    ctx.beginPath();
+    const x0 = Math.floor((view.cx - W / 2 / s) / step) * step;
+    const x1 = view.cx + W / 2 / s;
+    for (let x = x0; x <= x1; x += step) {
+        const px = Math.round(originX + x * s) + 0.5;
+        ctx.moveTo(px, 0); ctx.lineTo(px, H);
+    }
+    const y0 = Math.floor((view.cy - H / 2 / s) / step) * step;
+    const y1 = view.cy + H / 2 / s;
+    for (let y = y0; y <= y1; y += step) {
+        const py = Math.round(originY - y * s) + 0.5;
+        ctx.moveTo(0, py); ctx.lineTo(W, py);
+    }
+    ctx.stroke();
+
+    // Axes du point de départ
+    ctx.strokeStyle = css('--grid-major');
+    ctx.beginPath();
+    ctx.moveTo(0, Math.round(originY) + 0.5); ctx.lineTo(W, Math.round(originY) + 0.5);
+    ctx.moveTo(Math.round(originX) + 0.5, 0); ctx.lineTo(Math.round(originX) + 0.5, H);
+    ctx.stroke();
+
+    // Échelle
+    ctx.fillStyle = css('--muted');
+    ctx.font = '11px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(step >= 1 ? step + ' m' : (step * 100) + ' cm', 12, H - 14);
+    ctx.strokeStyle = css('--muted');
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(12, H - 24); ctx.lineTo(12 + step * s, H - 24);
+    ctx.moveTo(12, H - 28); ctx.lineTo(12, H - 20);
+    ctx.moveTo(12 + step * s, H - 28); ctx.lineTo(12 + step * s, H - 20);
+    ctx.stroke();
+}
+
+function drawStart(ox, oy) {
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.strokeStyle = css('--muted');
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+    ctx.moveTo(-11, 0); ctx.lineTo(11, 0);
+    ctx.moveTo(0, -11); ctx.lineTo(0, 11);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawTrail(ox, oy, s) {
+    if (trail.length < 2) return;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    let i = 0;
+    while (i < trail.length - 1) {
+        const halt = trail[i + 1].halt;
+        ctx.strokeStyle = halt ? css('--alert') : css('--trail');
+        ctx.globalAlpha = halt ? 0.9 : 0.75;
+        ctx.beginPath();
+        ctx.moveTo(ox + trail[i].x * s, oy - trail[i].y * s);
+        let j = i + 1;
+        while (j < trail.length && trail[j].halt === halt) {
+            ctx.lineTo(ox + trail[j].x * s, oy - trail[j].y * s);
+            j++;
+        }
+        ctx.stroke();
+        i = j - 1;
+    }
+    ctx.globalAlpha = 1;
+}
+
+// Tondeuse vue de dessus, dessinée en mètres d'après la voie et le diamètre de
+// roue réels, puis mise à l'échelle. Changer la calibration change le dessin.
+// Un arrêt ne produit qu'un point de trace, puisque le robot ne bouge plus :
+// le colorer ne suffit pas, il faut un marqueur pour le voir.
+function drawHalts(ox, oy, s) {
+    for (let i = 0; i < trail.length; i++) {
+        if (!trail[i].halt || (i > 0 && trail[i - 1].halt)) continue;
+        const x = ox + trail[i].x * s;
+        const y = oy - trail[i].y * s;
+        ctx.strokeStyle = css('--alert');
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.moveTo(x - 9, y - 9); ctx.lineTo(x + 9, y + 9);
+        ctx.moveTo(x + 9, y - 9); ctx.lineTo(x - 9, y + 9);
+        ctx.stroke();
+    }
+}
+
+function drawMower(ox, oy, s) {
+    const px = ox + pose.x * s;
+    const py = oy - pose.y * s;
+    const halted = cur.stop || (cur.liftL && cur.liftR);
+
+    const ht = params.track / 2;            // demi-voie : centre des roues
+    const wd = params.wheel;                // diamètre de roue = longueur vue de dessus
+    const ww = wd * 0.28;                   // largeur de bandage
+    const bl = params.track * 1.55;         // longueur de carrosserie
+    const bw = params.track * 0.94;         // largeur de carrosserie
+    const deck = bw * 0.38;                 // rayon du plateau de coupe
+
+    // Reste lisible même très dézoomé : on ne descend pas sous ~30 px de long.
+    const k = Math.max(s, 30 / bl);
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(-pose.th);                   // canvas : y vers le bas
+    ctx.scale(k, k);
+
+    // roues motrices, à la voie exacte
+    ctx.shadowColor = 'rgba(0,0,0,.35)';
+    ctx.shadowBlur = bl * 0.12;
+    ctx.shadowOffsetY = bl * 0.04;
+    ctx.fillStyle = '#2b2b2b';
+    ctx.beginPath();
+    ctx.roundRect(-bl * 0.18 - wd / 2, -ht - ww / 2, wd, ww, ww * 0.35);
+    ctx.roundRect(-bl * 0.18 - wd / 2, ht - ww / 2, wd, ww, ww * 0.35);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    // roulette avant
+    ctx.fillStyle = '#3a3a3a';
+    ctx.beginPath();
+    ctx.arc(bl * 0.34, 0, wd * 0.17, 0, Math.PI * 2);
+    ctx.fill();
+
+    // carrosserie
+    const body = ctx.createLinearGradient(0, -bw / 2, 0, bw / 2);
+    body.addColorStop(0, halted ? '#e57373' : '#8bc34a');
+    body.addColorStop(1, halted ? '#b71c1c' : '#4e7d1e');
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.roundRect(-bl / 2, -bw / 2, bl, bw,
+                  [bw * 0.2, bw * 0.42, bw * 0.42, bw * 0.2]);
+    ctx.fill();
+    ctx.lineWidth = bl * 0.025;
+    ctx.strokeStyle = 'rgba(0,0,0,.35)';
+    ctx.stroke();
+
+    // pare-chocs avant
+    ctx.beginPath();
+    ctx.moveTo(bl * 0.34, -bw * 0.44);
+    ctx.quadraticCurveTo(bl * 0.56, 0, bl * 0.34, bw * 0.44);
+    ctx.lineWidth = bl * 0.06;
+    ctx.strokeStyle = 'rgba(0,0,0,.45)';
+    ctx.stroke();
+
+    // plateau de coupe et lames
+    ctx.save();
+    ctx.translate(-bl * 0.04, 0);
+    ctx.fillStyle = 'rgba(0,0,0,.28)';
+    ctx.beginPath();
+    ctx.arc(0, 0, deck, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.rotate(bladeAngle);
+    ctx.strokeStyle = 'rgba(255,255,255,.75)';
+    ctx.lineWidth = deck * 0.19;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+        ctx.rotate(Math.PI * 2 / 3);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(deck * 0.82, 0);
+        ctx.stroke();
+    }
+    ctx.restore();
+
+    // repère de cap
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.beginPath();
+    ctx.moveTo(bl * 0.46, 0);
+    ctx.lineTo(bl * 0.30, -bw * 0.14);
+    ctx.lineTo(bl * 0.30, bw * 0.14);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function render() {
+    if (!W) { requestAnimationFrame(render); return; }
+    const s = view.scale;
+    if (view.follow) { view.cx = pose.x; view.cy = pose.y; }
+    const ox = W / 2 - view.cx * s;      // pixel du point de départ (0,0)
+    const oy = H / 2 + view.cy * s;
+
+    ctx.fillStyle = css('--bg');
+    ctx.fillRect(0, 0, W, H);
+    drawGrid(ox, oy, s);
+    drawStart(ox, oy);
+    drawTrail(ox, oy, s);
+    drawHalts(ox, oy, s);
+    drawMower(ox, oy, s);
+    requestAnimationFrame(render);
+}
+
+/* ---------- rafraîchissement du panneau ---------- */
+function bar(id, v) {
+    const e = el(id);
+    const p = Math.max(-1, Math.min(1, v));
+    e.style.left = (p >= 0 ? 50 : 50 + p * 50) + '%';
+    e.style.width = Math.abs(p) * 50 + '%';
+    e.style.background = p < 0 ? css('--muted') : css('--accent');
+}
+function refresh() {
+    el('v_ml').textContent = cur.ml.toFixed(2);
+    el('v_mr').textContent = cur.mr.toFixed(2);
+    bar('b_ml', cur.ml);
+    bar('b_mr', cur.mr);
+    el('f_stop').classList.toggle('on', !!cur.stop);
+    el('f_lift_l').classList.toggle('on', !!cur.liftL);
+    el('f_lift_r').classList.toggle('on', !!cur.liftR);
+    el('v_x').textContent = pose.x.toFixed(2);
+    el('v_y').textContent = pose.y.toFixed(2);
+    el('v_th').textContent = Math.round(pose.th * 180 / Math.PI);
+    el('v_v').textContent = speed.toFixed(2);
+    el('v_d').textContent = distance.toFixed(2);
+    el('v_w').textContent = Math.round(omega * 180 / Math.PI);
+    const fastest = Math.max(Math.abs(cur.ml), Math.abs(cur.mr)) * params.vmax;
+    el('v_rpm').textContent = Math.round(fastest / (Math.PI * params.wheel) * 60);
+}
+setInterval(refresh, 100);
+
+/* ---------- commandes ---------- */
+el('host').value = localStorage.getItem('decibot_host')
+    || (location.protocol.startsWith('http') ? location.host : '');
+
+el('connect').addEventListener('click', () => {
+    if (wantConnected) { disconnect(); el('connect').textContent = 'Connecter'; }
+    else { connect(); el('connect').textContent = 'Déconnecter'; }
+});
+el('host').addEventListener('keydown', e => { if (e.key === 'Enter') el('connect').click(); });
+
+el('zoom').addEventListener('input', e => { view.scale = +e.target.value; });
+el('follow').addEventListener('change', e => { view.follow = e.target.checked; });
+el('recenter').addEventListener('click', () => { view.cx = pose.x; view.cy = pose.y; });
+el('clear').addEventListener('click', () => {
+    trail = [{ x: pose.x, y: pose.y, halt: false }];
+    distance = 0;
+});
+el('vmax').addEventListener('input', e => { params.vmax = +e.target.value || 0.6; });
+el('track').addEventListener('input', e => { params.track = +e.target.value || 0.31; });
+el('wheel').addEventListener('input', e => { params.wheel = +e.target.value || 0.16; });
+
+let demoTimer = null;
+el('demo').addEventListener('change', e => {
+    if (e.target.checked) {
+        disconnect();
+        el('connect').textContent = 'Connecter';
+        setState('démo', 'on');
+        let t = performance.now();
+        demoTimer = setInterval(() => {
+            const now = performance.now();
+            demoStep(Math.min((now - t) / 1000, 0.5));
+            t = now;
+        }, PERIOD_MS);
+    } else {
+        clearInterval(demoTimer);
+        demoTimer = null;
+        cur.ml = cur.mr = 0;
+        setState('déconnecté');
+    }
+});
+
+/* glisser pour déplacer la vue */
+let drag = null;
+cv.addEventListener('pointerdown', e => {
+    drag = { x: e.clientX, y: e.clientY, cx: view.cx, cy: view.cy };
+    cv.setPointerCapture(e.pointerId);
+    cv.classList.add('drag');
+});
+cv.addEventListener('pointermove', e => {
+    if (!drag) return;
+    view.follow = false;
+    el('follow').checked = false;
+    view.cx = drag.cx - (e.clientX - drag.x) / view.scale;
+    view.cy = drag.cy + (e.clientY - drag.y) / view.scale;
+});
+const endDrag = () => { drag = null; cv.classList.remove('drag'); };
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    const f = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+    view.scale = Math.max(10, Math.min(300, view.scale * f));
+    el('zoom').value = Math.round(view.scale);
+}, { passive: false });
+
+/* Paramètres d'URL : ?host=192.168.1.42&connect  ou  ?demo
+   Pratique pour un affichage en kiosque, ou pour montrer la page sans robot. */
+const qs = new URLSearchParams(location.search);
+if (qs.has('host')) el('host').value = qs.get('host');
+if (qs.has('demo')) {
+    el('demo').checked = true;
+    el('demo').dispatchEvent(new Event('change'));
+} else if (qs.has('connect')) {
+    el('connect').click();
+}
+
+resize();
+render();
+</script>
+</body>
+</html>
